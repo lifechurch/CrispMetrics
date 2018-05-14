@@ -1,9 +1,38 @@
 # CrispMetrics &middot; [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/lifechurch/CrispMetrics/blob/master/LICENSE)[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://google.com)
 
-#### TO DO:  Add Description.
+## Description
+
+This project will allow you to pull statistics out of Crisp, and synch it into a database for calculation and display on a dashboard. We are planning to use it to monitor our KPIs in the helpdesk teams.
 
 ## Documentation
-#### TO DO:  Add documentation.
+
+### Authentication
+
+First thing you need to do is to authenticate the app, you should only need to do this once.
+
+```
+curl -H "Content-Type: application/json" -X POST -d '{"email":"YOUR_ACCOUNT_EMAIL","password":"YOUR_ACCOUNT_PASSWORD"}' https://api.crisp.chat/v1/user/session/login
+```
+
+Copy the user_id, identifier and key values and put them in an auth object in a file named __config.json__ in your root directory. This file is in the ___.gitignore___ so it keeps it out of source control.
+
+```
+{
+  "auth": {
+    "user_id": "xxxx",
+    "identifier": "yyyy",
+    "key": "zzzz"
+  }
+}
+```
+
+### Development
+
+Running this in dev mode will watch the files in the src directory and rerun them on change.
+
+```
+npm run dev
+```
 
 ## Contributing
 
