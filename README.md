@@ -34,6 +34,16 @@ Running this in dev mode will watch the files in the src directory and rerun the
 npm run dev
 ```
 
+#### Postgres Docker
+
+An easy way to give this a DB for development is to use the provided docker-compose file like this:
+
+```
+docker-compose up
+```
+
+You can them use the web UI on http://localhost:8080
+
 ## Contributing
 
 The main purpose of this repository is to continue to grow CrispMetrics, making it faster and easier to use and more robust. Development of CrispMetrics happens in the open on GitHub, and we look forward to working with many talented developers on this project. Read below to learn how you can take part in improving CrispMetrics.
