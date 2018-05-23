@@ -28,13 +28,17 @@
     "nodemon": "^1.17.4"
   },
   "dependencies": {
+    "moment": "^2.22.1",
     "node-crisp-api": "^1.4.3",
     "pg": "^7.4.3",
     "pg-hstore": "^2.3.2",
     "sequelize": "^4.37.7"
   },
   "nodemonConfig": {
-    "ignore": ["dist/*", "node_modules/*"],
+    "ignore": [
+      "dist/*",
+      "node_modules/*"
+    ],
     "delay": "500"
   }
 }
