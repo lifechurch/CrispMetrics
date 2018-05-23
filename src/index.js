@@ -1,5 +1,6 @@
 const Config = require('./Config.js');
 const Crisp = require('node-crisp-api');
+const moment = require('moment');
 
 let config;
 let CrispClient = new Crisp();
@@ -48,4 +49,16 @@ async function main() {
   }
 }
 
+//calculate response time between created at vs updated at times
+function calcResponseTime(){
+  //created at time
+  var a = moment(1512597259585);
+  //udpated at time
+  var b = moment(1512598047037);
+  var difference = moment.duration(b.diff(a));
+  difference = difference.asMinutes();
+  console.log('minutes difference ' + difference);
+}
+
 main();
+calcResponseTime();
