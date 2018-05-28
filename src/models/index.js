@@ -35,9 +35,18 @@ async function main() {
       avatar: ''
     });
 
+    await User.create({
+      user_id: '23456',
+      first_name: 'Some',
+      last_name: 'dude',
+      email: 'thatdude@gmail.com',
+      avatar: ''
+    });
+
     let users = await User.findAll();
 
     console.log( users );
+    process.exit(0);
   } catch(e) {
    console.error(e); 
   }
