@@ -22,6 +22,13 @@ Copy the user_id, identifier and key values and put them in an auth object in a 
     "user_id": "xxxx",
     "identifier": "yyyy",
     "key": "zzzz"
+  },
+  "db": {
+    "user": "postgres",
+    "password": "example",
+    "name": "postgres",
+    "host": "localhost",
+    "port": "5432"
   }
 }
 ```
@@ -42,7 +49,7 @@ An easy way to give this a DB for development is to use the provided docker-comp
 docker-compose up
 ```
 
-You can them use the web UI on http://localhost:8080
+You can them use the web UI on http://localhost:8080 the default username and db name is __postgres__ and the default password is __example__
 
 ## Contributing
 

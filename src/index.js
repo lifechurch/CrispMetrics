@@ -1,7 +1,3 @@
-const fs = require('fs');
-const util = require('util');
-const moment = require('moment');
-
 const Config = require('./Config.js');
 
 const Sequelize = require('sequelize');
@@ -9,62 +5,66 @@ const Crisp = require('node-crisp-api');
 
 const Conversations = require('./models/conversations');
 
-let config;
 let sequelize;
-let CrispClient = new Crisp();
+let crisp = new Crisp();
 
 async function processSite(site) {
   console.log('Saw', site.name, 'with id:', site.id);
 
-  // let ops = await CrispClient.websiteOperators.getList(site.id);// - Need admin account to get this probably
+  // let ops = await crisp.websiteOperators.getList(site.id);// - Need admin account to get this probably
   // console.log(ops);
 
-  let settings = await CrispClient.websiteSettings.get(site.id);
+  let settings = await crisp.websiteSettings.get(site.id);
   writeObject(settings, `dist/${site.id}-settings.json`);
   console.log(`Settings for ${site.name}: ${settings}`);
 }
 
 async function processConversations(site) {
-  let conversations = await CrispClient.websiteConversations.getList(site.id, 0);
+  let conversations = await crisp.websiteConversations.getList(site.id, 0);
   writeObject(conversations, `dist/${site.id}-conversations.json`);
   console.log('Conversations:', conversations);   
 }
 
-async function authenticateCrisp() {
+async function loadConfig() {
   try {
-    config = await (new Config()).getValues();
+    return await (new Config()).getValues();
   } catch (e) {
     console.error('ERROR: Encountered trying to load the config:', e);
     process.exit(1);
   }
+}
 
+async function authenticateCrisp(config) {
   try {
-    await CrispClient.authenticate(config.auth.identifier, config.auth.key);
+    await crisp.authenticate(config.auth.identifier, config.auth.key);
   } catch (e) {
     console.error('ERROR: Encountered trying to authenticate the Crisp API:', e);
     process.exit(1);
   }
 }
 
-async function connectToDB() {
+async function connectToDB(config) {
   try {
-    sequelize = new Sequelize('postgres://postgres:example@localhost:5432/postgres');
+    let connectString = `postgres://${config.db.user}:${config.db.password}@${config.db.host}:${config.db.port}/${config.db.name}`;
+    console.log(`Connect on ${connectString}`);
+    sequelize = new Sequelize(connectString, {
+      logging: false // Set to true to debug SQL queries
+    });
     await sequelize.authenticate();
+    console.log('Connected to DB');
   } catch (e) {
     console.error('ERROR: Encountered trying to open the DB for Sequelize:', e);
     process.exit(1);
   }  
 }
 
-async function main() {
+async function processCrispData() {
   try {
-    let myProfile = await CrispClient.userProfile.get();
+    let myProfile = await crisp.userProfile.get();
     writeObject(myProfile, 'dist/myProfile.json');
     console.log("Hello:", myProfile.first_name);
 
-
-
-    let websites = await CrispClient.userWebsites.get();
+    let websites = await crisp.userWebsites.get();
     writeObject(websites, 'dist/websites.json');
     console.log('Websites:', websites);
     
@@ -80,25 +80,23 @@ async function main() {
   }
 }
 
-//calculate response time between created at vs updated at times
-function calcResponseTime(){
-  //created at time
-  var a = moment(1512597259585);
-  //udpated at time
-  var b = moment(1512598047037);
-  var difference = moment.duration(b.diff(a));
-  difference = difference.asMinutes();
-  console.log('minutes difference ' + difference);
+async function main() {
+  let config = await loadConfig();
+
+  console.log('Authenticating with Crisp...');
+  await authenticateCrisp(config);
+
+  console.log('Connecting to the DB...');
+  await connectToDB(config);
+
+  // console.log('Going to get some data...');
+  // await processCrispData();
+
+  console.log('Processing Conversations');
+  let conversations = new Conversations(crisp, sequelize);
+  await conversations.sync();
+
+  process.exit(0);
 }
 
-function writeObject(obj, fileName) {
-  fs.writeFileSync(fileName, JSON.stringify(obj, null, '\t'), 'utf-8');  
-}
-
-authenticateCrisp();
-connectToDB();
-// main();
-calcResponseTime();
-
-let conversations = new Conversations(CrispClient, sequelize);
-conversations.sync();
+main();
