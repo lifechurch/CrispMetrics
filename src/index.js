@@ -4,28 +4,12 @@ const Sequelize = require('sequelize');
 const Crisp = require('node-crisp-api');
 
 const Conversations = require('./models/conversations');
+const Websites = require('./models/websites');
 
 let sequelize;
 let crisp = new Crisp();
 
-async function processSite(site) {
-  console.log('Saw', site.name, 'with id:', site.id);
-
-  // let ops = await crisp.websiteOperators.getList(site.id);// - Need admin account to get this probably
-  // console.log(ops);
-
-  let settings = await crisp.websiteSettings.get(site.id);
-  writeObject(settings, `dist/${site.id}-settings.json`);
-  console.log(`Settings for ${site.name}: ${settings}`);
-}
-
-async function processConversations(site) {
-  let conversations = await crisp.websiteConversations.getList(site.id, 0);
-  writeObject(conversations, `dist/${site.id}-conversations.json`);
-  console.log('Conversations:', conversations);   
-}
-
-async function loadConfig() {
+async function _loadConfig() {
   try {
     return await (new Config()).getValues();
   } catch (e) {
@@ -34,7 +18,7 @@ async function loadConfig() {
   }
 }
 
-async function authenticateCrisp(config) {
+async function _authenticateCrisp(config) {
   try {
     await crisp.authenticate(config.auth.identifier, config.auth.key);
   } catch (e) {
@@ -43,7 +27,7 @@ async function authenticateCrisp(config) {
   }
 }
 
-async function connectToDB(config) {
+async function _connectToDB(config) {
   try {
     let connectString = `postgres://${config.db.user}:${config.db.password}@${config.db.host}:${config.db.port}/${config.db.name}`;
     console.log(`Connect on ${connectString}`);
@@ -58,43 +42,35 @@ async function connectToDB(config) {
   }  
 }
 
-async function processCrispData() {
-  try {
-    let myProfile = await crisp.userProfile.get();
-    writeObject(myProfile, 'dist/myProfile.json');
-    console.log("Hello:", myProfile.first_name);
-
-    let websites = await crisp.userWebsites.get();
-    writeObject(websites, 'dist/websites.json');
-    console.log('Websites:', websites);
-    
-    for(let site of websites) {
-      await processSite(site);
-      await processConversations(site);
-    }
-
-    console.log('Finished.');
-    process.exit(0);
-  } catch (e) {
-    console.error('ERROR: Encountered an Error while calling the API:', e);
-  }
-}
-
 async function main() {
-  let config = await loadConfig();
+  let config = await _loadConfig();
 
   console.log('Authenticating with Crisp...');
-  await authenticateCrisp(config);
+  await _authenticateCrisp(config);
 
   console.log('Connecting to the DB...');
-  await connectToDB(config);
+  await _connectToDB(config);
 
-  // console.log('Going to get some data...');
-  // await processCrispData();
+  // Start processing data
+  console.log('Processing Websites');
+  let websites = new Websites(crisp, sequelize);
+  await websites.sync();
 
-  console.log('Processing Conversations');
-  let conversations = new Conversations(crisp, sequelize);
-  await conversations.sync();
+  for(let site of await websites.getAll()) {
+    console.log(`Gonna look at ${site.website_id}`);
+    let conversations = new Conversations(crisp, sequelize, site.website_id);
+    // let allConvos = await conversations.getAll();
+    // console.log(allConvos);
+    // console.log(`Looping ${site.id}`);
+    for(let conversation of await conversations.getAll()) {
+      // console.log('Get list');
+      // let conversations = await this.crisp.websiteConversations.getList(site.id, 0);
+      // console.log(`Conversations: ${conversations.length}`);
+      console.log(conversation);
+      this._writeObject(conversation, `dist/${site}-conversation-.json`);
+      // await this._iterateConversations(site, conversations);
+    }
+  }
 
   process.exit(0);
 }

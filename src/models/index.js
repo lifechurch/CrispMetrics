@@ -43,6 +43,8 @@ async function main() {
       avatar: ''
     });
 
+    console.log('Finding users...');
+
     let users = await User.findAll();
 
     console.log( users );
