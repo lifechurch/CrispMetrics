@@ -14,7 +14,6 @@ class Model {
   }
 
   async sync() {
-    console.log('Super sync');
     await this._dataModel.sync({
       force: true
     });

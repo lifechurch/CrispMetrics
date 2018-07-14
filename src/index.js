@@ -5,6 +5,7 @@ const Crisp = require('node-crisp-api');
 
 const Conversations = require('./models/conversations');
 const Websites = require('./models/websites');
+const Users = require('./models/users');
 
 let sequelize;
 let crisp = new Crisp();
@@ -56,22 +57,18 @@ async function main() {
   let websites = new Websites(crisp, sequelize);
   await websites.sync();
 
+  let _users = {};
+
   for(let site of await websites.getAll()) {
     console.log(`Gonna look at ${site.website_id}`);
     let conversations = new Conversations(crisp, sequelize, site.website_id);
-    // let allConvos = await conversations.getAll();
-    // console.log(allConvos);
-    // console.log(`Looping ${site.id}`);
-    for(let conversation of await conversations.getAll()) {
-      // console.log('Get list');
-      // let conversations = await this.crisp.websiteConversations.getList(site.id, 0);
-      // console.log(`Conversations: ${conversations.length}`);
-      console.log(conversation);
-      this._writeObject(conversation, `dist/${site}-conversation-.json`);
-      // await this._iterateConversations(site, conversations);
-    }
+    await conversations.sync();
+
+    _users = Object.assign(_users, conversations.getUsers());
   }
 
+  let users = new Users(crisp, sequelize, _users);
+  await users.sync();
   process.exit(0);
 }
 
