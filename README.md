@@ -22,6 +22,13 @@ Copy the user_id, identifier and key values and put them in an auth object in a 
     "user_id": "xxxx",
     "identifier": "yyyy",
     "key": "zzzz"
+  },
+  "db": {
+    "user": "postgres",
+    "password": "example",
+    "name": "postgres",
+    "host": "localhost",
+    "port": "5432"
   }
 }
 ```
@@ -33,6 +40,16 @@ Running this in dev mode will watch the files in the src directory and rerun the
 ```
 npm run dev
 ```
+
+#### Postgres Docker
+
+An easy way to give this a DB for development is to use the provided docker-compose file like this:
+
+```
+docker-compose up
+```
+
+You can them use the web UI on http://localhost:8080 the default username and db name is __postgres__ and the default password is __example__
 
 ## Contributing
 

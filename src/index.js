@@ -1,64 +1,75 @@
 const Config = require('./Config.js');
+
+const Sequelize = require('sequelize');
 const Crisp = require('node-crisp-api');
-const moment = require('moment');
 
-let config;
-let CrispClient = new Crisp();
+const Conversations = require('./models/conversations');
+const Websites = require('./models/websites');
+const Users = require('./models/users');
 
-async function processSite(site) {
-  console.log('Saw', site.name, 'with id:', site.id);
+let sequelize;
+let crisp = new Crisp();
 
-  // CrispClient.websiteOperators.getList(site.id); - Need admin account to get this probably
-
-  let settings = await CrispClient.websiteSettings.get(site.id);
-  console.log(`Settings for ${site.name}: ${settings}`);
-}
-
-async function processConversations(site) {
-  let conversations = await CrispClient.websiteConversations.getList(site.id, 0);
-  console.log('Conversations:', conversations);   
-}
-
-async function main() {
+async function _loadConfig() {
   try {
-    config = await (new Config()).getValues();
+    return await (new Config()).getValues();
   } catch (e) {
     console.error('ERROR: Encountered trying to load the config:', e);
     process.exit(1);
   }
+}
 
+async function _authenticateCrisp(config) {
   try {
-    await CrispClient.authenticate(config.auth.identifier, config.auth.key);
-
-    let myProfile = await CrispClient.userProfile.get();
-
-    console.log("Hello:", myProfile.first_name);
-
-    let websites = await CrispClient.userWebsites.get();
-    console.log('Websites:', websites);
-    
-    for(let site of websites) {
-      await processSite(site);
-      await processConversations(site);
-    }
-
-    console.log('Finished.');
-    process.exit(0);
+    await crisp.authenticate(config.auth.identifier, config.auth.key);
   } catch (e) {
-    console.error('ERROR: Encountered an Error while calling the API:', e);
+    console.error('ERROR: Encountered trying to authenticate the Crisp API:', e);
+    process.exit(1);
   }
 }
 
-//calculate response time between created at vs updated at times
-function calcResponseTime(){
-  //created at time
-  var a = moment(1512597259585);
-  //udpated at time
-  var b = moment(1512598047037);
-  var difference = moment.duration(b.diff(a));
-  difference = difference.asMinutes();
-  console.log('minutes difference ' + difference);
+async function _connectToDB(config) {
+  try {
+    let connectString = `postgres://${config.db.user}:${config.db.password}@${config.db.host}:${config.db.port}/${config.db.name}`;
+    console.log(`Connect on ${connectString}`);
+    sequelize = new Sequelize(connectString, {
+      logging: false // Set to true to debug SQL queries
+    });
+    await sequelize.authenticate();
+    console.log('Connected to DB');
+  } catch (e) {
+    console.error('ERROR: Encountered trying to open the DB for Sequelize:', e);
+    process.exit(1);
+  }  
+}
+
+async function main() {
+  let config = await _loadConfig();
+
+  console.log('Authenticating with Crisp...');
+  await _authenticateCrisp(config);
+
+  console.log('Connecting to the DB...');
+  await _connectToDB(config);
+
+  // Start processing data
+  console.log('Processing Websites');
+  let websites = new Websites(crisp, sequelize);
+  await websites.sync();
+
+  let _users = {};
+
+  for(let site of await websites.getAll()) {
+    console.log(`Gonna look at ${site.website_id}`);
+    let conversations = new Conversations(crisp, sequelize, site.website_id);
+    await conversations.sync();
+
+    _users = Object.assign(_users, conversations.getUsers());
+  }
+
+  let users = new Users(crisp, sequelize, _users);
+  await users.sync();
+  process.exit(0);
 }
 
 main();
-calcResponseTime();
