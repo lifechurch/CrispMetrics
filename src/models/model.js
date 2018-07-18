@@ -15,12 +15,11 @@ class Model {
 
   async sync() {
     await this._dataModel.sync({
-      force: true
+      force: false
     });
   }
 
   async getAll() {
-    await this.sync();
     return await this._dataModel.findAll();  
   }
 

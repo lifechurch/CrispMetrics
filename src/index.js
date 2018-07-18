@@ -59,7 +59,9 @@ async function main() {
 
   let _users = {};
 
-  for(let site of await websites.getAll()) {
+  const _websites = await websites.getAll();
+
+  for(let site of _websites) {
     console.log(`Gonna look at ${site.website_id}`);
     let conversations = new Conversations(crisp, sequelize, site.website_id);
     await conversations.sync();
@@ -69,6 +71,7 @@ async function main() {
 
   let users = new Users(crisp, sequelize, _users);
   await users.sync();
+
   process.exit(0);
 }
 
