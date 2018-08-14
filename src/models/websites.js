@@ -23,11 +23,15 @@ class Websites extends Model {
 
         this._writeObject(settings, `dist/${site.id}-settings.json`);
 
-        await this._dataModel.create({
-          website_id: site.id,
-          name: site.name,
-          domain: site.domain,
-          logo: site.logo
+        await this._dataModel.findOrCreate({
+          where: {
+            website_id: site.id
+          }, defaults: {
+            website_id: site.id,
+            name: site.name,
+            domain: site.domain,
+            logo: site.logo
+          }
         });
         console.log(`Website ${site.name} has id ${site.id}`);
 

@@ -15,9 +15,14 @@ class Users extends Model {
 
         this._writeObject(user, `dist/${user.user_id}-users.json`);
 
-        await this._dataModel.create({
-          user_id: user.user_id,
-          nickname: user.nickname,
+        await this._dataModel.findOrCreate({
+          where: {
+            user_id: user.user_id
+          },
+          defaults: {
+            user_id: user.user_id,
+            nickname: user.nickname,
+          }
         });
         console.log(`User ${user.nickname} has id ${user.user_id}`);
 
