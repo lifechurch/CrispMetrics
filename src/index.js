@@ -66,6 +66,15 @@ async function main() {
     let conversations = new Conversations(crisp, sequelize, site.website_id);
     await conversations.sync();
 
+    let unresolved = await conversations.getAll({
+      where: {
+        website_id: site.website_id,
+        state: 'unresolved'
+      }
+    });
+
+    console.log(`Site ${site.name} has ${unresolved.length} unresolved conversations`);
+
     _users = Object.assign(_users, conversations.getUsers());
   }
 
