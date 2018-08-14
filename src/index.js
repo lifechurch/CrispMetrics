@@ -73,7 +73,13 @@ async function main() {
       }
     });
 
-    console.log(`Site ${site.name} has ${unresolved.length} unresolved conversations`);
+    let site_conversations = await conversations.getAll({
+      where: {
+        website_id: site.website_id
+      }
+    });
+
+    console.log(`Site ${site.name} has ${unresolved.length} unresolved of ${site_conversations.length} conversations`);
 
     _users = Object.assign(_users, conversations.getUsers());
   }

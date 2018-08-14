@@ -19,8 +19,8 @@ class Model {
     });
   }
 
-  async getAll(where) {
-    return await this._dataModel.findAll(where);
+  async getAll(criteria) {
+    return await this._dataModel.findAll(criteria);
   }
 
   _getDataModel() {
