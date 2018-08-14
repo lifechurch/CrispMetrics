@@ -25,9 +25,8 @@
   "dependencies": {
     "moment": "^2.22.1",
     "node-crisp-api": "^1.4.3",
-    "pg": "^7.4.3",
-    "pg-hstore": "^2.3.2",
-    "sequelize": "^4.37.7"
+    "sequelize": "^4.37.7",
+    "sqlite3": "^4.0.2"
   },
   "nodemonConfig": {
     "ignore": [

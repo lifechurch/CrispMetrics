@@ -30,11 +30,13 @@ async function _authenticateCrisp(config) {
 
 async function _connectToDB(config) {
   try {
-    let connectString = `postgres://${config.db.user}:${config.db.password}@${config.db.host}:${config.db.port}/${config.db.name}`;
-    console.log(`Connect on ${connectString}`);
-    sequelize = new Sequelize(connectString, {
-      logging: false // Set to true to debug SQL queries
+    sequelize = new Sequelize(config.db.name, null, null, {
+      host: 'localhost',
+      dialect: 'sqlite',
+      logging: false,
+      storage: './dist/crisp-db.sqlite'
     });
+
     await sequelize.authenticate();
     console.log('Connected to DB');
   } catch (e) {
