@@ -15,7 +15,7 @@ class Model {
 
   async sync() {
     await this._dataModel.sync({
-      force: false
+      force: process.env.FLUSH_DB || false
     });
   }
 
