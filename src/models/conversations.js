@@ -13,13 +13,18 @@ class Conversations extends Model {
 
     try {
       console.log(`Looping ${this.site}`);
-      for(let i = 0; i < 10; i++) {
-        console.log('Get list');
-        let conversations = await this.crisp.websiteConversations.getList(this.site, 0);
-        console.log(`Conversations: ${conversations.length}`);
+
+      let i = 1;
+      let conversations = await this.crisp.websiteConversations.getList(this.site, 0);
+
+      while(conversations.length > 0) {
+        conversations = await this.crisp.websiteConversations.getList(this.site, i);
         this._writeObject(conversations, `dist/${this.site}-conversations-${i}.json`);
 
-        return await this._iterateConversations(this.site, conversations);
+        console.log(`Page ${i} has ${conversations.length} conversations`);
+
+        await this._iterateConversations(this.site, conversations);
+        i++;
       }
     } catch(e) {
       console.error('ERROR: Unable to get conversations from websites:', e);
@@ -42,21 +47,27 @@ class Conversations extends Model {
         this.users[operator] = conversation.compose.operator[operator].user;
       }
 
-      await this._dataModel.create({
-        session_id: conversation.session_id,
-        website_id: conversation.website_id,
-        created_at: conversation.created_at,
-        updated_at: conversation.updated_at,
-        operator: operator,
-        state: conversation.state
+      await this._dataModel.findOrCreate({
+        where: {
+          session_id: conversation.session_id
+        },
+        defaults: {
+          session_id: conversation.session_id,
+          website_id: conversation.website_id,
+          created_at: conversation.created_at,
+          updated_at: conversation.updated_at,
+          operator: operator,
+          state: conversation.state
+        }
       });
       
-      console.log(`Elapsed time for ${conversation.session_id} is ${this._calcTimeElapsed(conversation.created_at, conversation.updated_at)} minute(s)`);
-      await this._getConversationMessages(conversation.website_id, conversation.session_id);
+      // console.log(`Elapsed time for ${conversation.session_id} is ${this._calcTimeElapsed(conversation.created_at, conversation.updated_at)} minute(s)`);
+      // await this._getConversationMessages(conversation.website_id, conversation.session_id);
     }
   }
 
-  async _getConversationMessages(websiteId, sessionId) {
+    // TODO: Convert this into a Messages class to iterate and store the messages for later analysis
+    async _getConversationMessages(websiteId, sessionId) {
     try {
       let messages = await this.crisp.websiteConversations.getMessages(websiteId, sessionId);
       this._writeObject(messages, `dist/conversations/${websiteId}-${sessionId}-messages.json`);

@@ -59,16 +59,34 @@ async function main() {
 
   let _users = {};
 
-  for(let site of await websites.getAll()) {
+  const _websites = await websites.getAll();
+
+  for(let site of _websites) {
     console.log(`Gonna look at ${site.website_id}`);
     let conversations = new Conversations(crisp, sequelize, site.website_id);
     await conversations.sync();
+
+    let unresolved = await conversations.getAll({
+      where: {
+        website_id: site.website_id,
+        state: 'unresolved'
+      }
+    });
+
+    let site_conversations = await conversations.getAll({
+      where: {
+        website_id: site.website_id
+      }
+    });
+
+    console.log(`Site ${site.name} has ${unresolved.length} unresolved of ${site_conversations.length} conversations`);
 
     _users = Object.assign(_users, conversations.getUsers());
   }
 
   let users = new Users(crisp, sequelize, _users);
   await users.sync();
+
   process.exit(0);
 }
 

@@ -15,13 +15,12 @@ class Model {
 
   async sync() {
     await this._dataModel.sync({
-      force: true
+      force: process.env.FLUSH_DB || false
     });
   }
 
-  async getAll() {
-    await this.sync();
-    return await this._dataModel.findAll();  
+  async getAll(criteria) {
+    return await this._dataModel.findAll(criteria);
   }
 
   _getDataModel() {
